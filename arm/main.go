@@ -9,9 +9,21 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"errors"
 )
 
 var port string = os.Getenv("PORT")
+
+func doSnapshot(source string, out_file string) ([]byte, error) {
+	// chrome --headless --disable-gpu --screenshot --window-size=1280,1696 https://www.chromestatus.com/
+	app := "wkhtmltoimage"
+	
+	log.Println(app + " " + source + " " + out_file)
+
+	cmd := exec.Command(app, source, out_file)
+
+	return cmd.Output()
+}
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -33,21 +45,20 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	source := sources[0]
 	source_sha1 := sha1.Sum([]byte(source))
-
-	app := "wkhtmltoimage"
-
 	out_file := "/tmp/snapshots/" + hex.EncodeToString(source_sha1[:]) + ".jpeg"
 
-	log.Println(app + " " + source + " " + out_file)
+	_, err := os.Stat(out_file)
 
-	// chrome --headless --disable-gpu --screenshot --window-size=1280,1696 https://www.chromestatus.com/
-	cmd := exec.Command(app, source, out_file)
-	_, output_err := cmd.Output()
+	if errors.Is(err, os.ErrNotExist) {
+		_, output_err := doSnapshot(source, out_file)
 
-	if output_err != nil {
-		log.Println(output_err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		if output_err != nil {
+			log.Println(output_err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else {
+		log.Println("file exists: " + out_file)
 	}
 
 	img, fileopen_err := os.Open(out_file)
