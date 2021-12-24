@@ -19,7 +19,7 @@ RUN echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
 WORKDIR /build
 
 # Copy the code into the container
-COPY ../*.go ./
+COPY *.go ./
 RUN mkdir /tmp/snapshots/
 
 
