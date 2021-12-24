@@ -13,7 +13,7 @@ Run the container with docker run and binding the ports to the host.
 The web service is exposed on port 80 in the container.
 
 ```sh
-docker run -d -P docker-wkhtmltoimage-webservice
+docker run -d -p 80:80 docker-wkhtmltoimage-webservice
 ```
 
 The container now runs as a daemon.
