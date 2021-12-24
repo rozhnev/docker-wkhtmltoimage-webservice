@@ -28,7 +28,7 @@ ENV PATH=$PATH:/usr/local/go/bin \
     GO111MODULE=off \
     CGO_ENABLED=0 \
     GOOS=linux \
-    GOARCH=amd64
+    GOARCH=arm64
 
 RUN go build -o main .
 
