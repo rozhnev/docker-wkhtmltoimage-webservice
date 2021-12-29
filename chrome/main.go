@@ -9,9 +9,21 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"errors"
 )
 
 var port string = os.Getenv("PORT")
+
+func doSnapshot(source string, out_file string) ([]byte, error) {
+	app := "/usr/bin/google-chrome-stable --headless --disable-software-rasterizer --window-size=800,600 --no-sandbox "
+	
+	out_file_str := "--screenshot=" + out_file
+	log.Println(app + " " + out_file_str + " " + source)
+
+	cmd := exec.Command(app, out_file, source)
+
+	return cmd.Output()
+}
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -33,24 +45,20 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	source := sources[0]
 	source_sha1 := sha1.Sum([]byte(source))
+	out_file := "/tmp/snapshots/" + hex.EncodeToString(source_sha1[:]) + ".jpeg"
 
-	// app := "wkhtmltoimage"
+	_, err := os.Stat(out_file)
 
-	app := "google-chrome-stable --headless --disable-gpu --screenshot --window-size=1280,1696 --no-sandbox "
+	if errors.Is(err, os.ErrNotExist) {
+		_, output_err := doSnapshot(source, out_file)
 
-	out_file := "--screenshot=/tmp/snapshots/" + hex.EncodeToString(source_sha1[:]) + ".jpeg"
-
-	log.Println(app + " " + source + " " + out_file)
-
-	// google-chrome-stable --headless --disable-gpu --screenshot --window-size=1280,1696 --no-sandbox --screenshot=newfilename.jpeg https://www.chromestatus.com/
-	cmd := exec.Command(app, out_file, source)
-
-	_, output_err := cmd.Output()
-
-	if output_err != nil {
-		log.Println(output_err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		if output_err != nil {
+			log.Println(output_err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else {
+		log.Println("file exists: " + out_file)
 	}
 
 	img, fileopen_err := os.Open(out_file)
