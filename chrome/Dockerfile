@@ -23,13 +23,13 @@ RUN dpkg -i google-chrome-stable_current_amd64.deb
 RUN wget https://go.dev/dl/go1.17.5.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go1.17.5.linux-amd64.tar.gz
 RUN echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile 
-# RUN source ~/.profile
+RUN /etc/init.d/dbus start
 
 # Move to working directory /build
 WORKDIR /build
 
 # Copy the code into the container
-COPY *.go ./
+COPY main.go ./
 RUN mkdir /tmp/snapshots/
 
 

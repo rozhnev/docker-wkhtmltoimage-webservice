@@ -1,28 +1,39 @@
 package main
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
-	"errors"
+	"time"
 )
 
 var port string = os.Getenv("PORT")
 
-func doSnapshot(source string, out_file string) ([]byte, error) {
-	app := "/usr/bin/google-chrome-stable --headless --disable-software-rasterizer --window-size=800,600 --no-sandbox "
-	
-	out_file_str := "--screenshot=" + out_file
-	log.Println(app + " " + out_file_str + " " + source)
+func doSnapshot(source string, out_file string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	cmd := exec.Command(app, out_file, source)
+	app := "/usr/bin/google-chrome-stable"
+	args := []string{
+		"--headless",
+		"--disable-software-rasterizer",
+		"--window-size=800,600",
+		"--no-sandbox",
+		"--disable-gpu",
+		"--screenshot=" + out_file,
+		source,
+	}
 
-	return cmd.Output()
+	cmd := exec.CommandContext(ctx, app, args...)
+	err := cmd.Run()
+	return err
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +61,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := os.Stat(out_file)
 
 	if errors.Is(err, os.ErrNotExist) {
-		_, output_err := doSnapshot(source, out_file)
+		output_err := doSnapshot(source, out_file)
 
 		if output_err != nil {
 			log.Println(output_err.Error())
