@@ -14,14 +14,13 @@ RUN apt-get install -y -qq wget libappindicator1 fonts-liberation libasound2 lib
 
 RUN apt-get install -f
 
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-# RUN dpkg -i google-chrome-stable_current_amd64.deb
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_arm64.deb
 
 RUN apt --fix-broken install
-RUN dpkg -i google-chrome-stable_current_amd64.deb
+RUN dpkg -i google-chrome-stable_current_arm64.deb
 
-RUN wget https://go.dev/dl/go1.17.5.linux-amd64.tar.gz
-RUN tar -C /usr/local -xzf go1.17.5.linux-amd64.tar.gz
+RUN wget https://go.dev/dl/go1.17.5.linux-arm64.tar.gz
+RUN tar -C /usr/local -xzf go1.17.5.linux-arm64.tar.gz
 RUN echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile 
 RUN /etc/init.d/dbus start
 
@@ -38,7 +37,7 @@ ENV PATH=$PATH:/usr/local/go/bin \
     GO111MODULE=off \
     CGO_ENABLED=0 \
     GOOS=linux \
-    GOARCH=amd64
+    GOARCH=arm64
 
 RUN go build -o main .
 
